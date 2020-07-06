@@ -1,42 +1,78 @@
-#![allow(dead_code, unused_variables, unused_imports, unused_mut)]
+pub type F = f32;
+pub type U = usize;
 
-use rand::prelude::*;
-
-type F = f32;
-type U = usize;
-
-enum SumMode{
+pub enum SumMode{
     Cropped,
     Calculted,
     DefaultValue(F)
 }
 
-#[derive(Debug)]
-struct Matrix {
-    x: U,
-    y: U,
-    matrix: Vec<Vec<F>>,
+pub struct Point(U, U);
+
+#[derive(std::fmt::Debug)]
+pub struct Matrix {
+    pub x: U,
+    pub y: U,
+    pub matrix: Vec<Vec<F>>,
 }
-struct Point(U, U);
 
 impl Matrix {
-    fn new (x: U, y: U) -> Matrix {
+    pub fn new (x: U, y: U) -> Matrix {
         Matrix::create(x, y, 0 as F)
     }
 
-    fn new_with_default (x: U, y: U, default: F) -> Matrix {
+    pub fn new_with_default (x: U, y: U, default: F) -> Matrix {
         Matrix::create(x, y, default)
     }
 
-    fn square (x: U) -> Matrix {
+    pub fn square (x: U) -> Matrix {
         Matrix::create(x, x, 0 as F)
     }
 
-    fn square_with_default (x: U, default: F) -> Matrix {
+    pub fn square_with_default (x: U, default: F) -> Matrix {
         Matrix::create(x, x, default)
     }
 
-    fn create (x: U, y: U, value: F) -> Matrix {
+    pub fn new_matrix (arrays: &[&[F]]) -> Matrix {
+        let x: U = arrays[0].len();
+        let mut y: U = 0;
+        let mut matrix: Vec<Vec<F>> = vec![];
+
+        for row in arrays.iter() {
+            y += 1;
+            
+            if row.len() != x {
+                panic!("Bad bad")
+            }
+
+            matrix.push(row.to_vec());
+        }
+
+        Matrix {
+            x,
+            y,
+            matrix
+        }
+    }
+
+    pub fn from_vectors (matrix: Vec<Vec<F>>) -> Matrix {
+        let y: U = matrix.len();
+        let mut x: U = matrix[0].len();
+        
+        for row in matrix.iter() {
+            if x != row.len() {
+                panic!("The rows has different size")
+            }
+        }
+
+        Matrix {
+            x,
+            y,
+            matrix
+        }
+    }
+
+    pub fn create (x: U, y: U, value: F) -> Matrix {
         Matrix {
             x,
             y,
@@ -44,19 +80,19 @@ impl Matrix {
         }
     }
 
-    fn get (&self, x: U, y: U) -> &F {
+    pub fn get (&self, x: U, y: U) -> &F {
         &self.matrix[y][x]
     }
 
-    fn set (&mut self, x: U, y: U, value: F) -> () {
+    pub fn set (&mut self, x: U, y: U, value: F) -> () {
         self.matrix[y][x] = value;
     }
 
-    fn shape (&self) -> (U,U) {
+    pub fn shape (&self) -> (U,U) {
         (self.x, self.y)
     }
 
-    fn print(&self) {
+    pub fn print(&self) {
         println!("{:?}", self);
         for y in 0..self.y {
             for x in 0..self.x {
@@ -66,7 +102,7 @@ impl Matrix {
         }
     }
 
-    fn convolute (&mut self, kernel: &Matrix, mode: SumMode) -> Matrix {
+    pub fn convolute (&mut self, kernel: &Matrix, mode: SumMode) -> Matrix {
         // TODO :: Check  for redva szar
         match mode {
             SumMode::Cropped => Matrix::convolute_cropped(self, kernel),
@@ -74,7 +110,7 @@ impl Matrix {
         }
     }
 
-    fn convolute_cropped (matrix: &mut Matrix, kernel: &Matrix) -> Matrix {
+    pub fn convolute_cropped (matrix: &mut Matrix, kernel: &Matrix) -> Matrix {
         let start_x: U = (kernel.x - 1) / 2;
         let start_y: U = (kernel.y - 1) / 2;
 
@@ -101,7 +137,7 @@ impl Matrix {
         }
     }
 
-    fn crop_from_middle (&self, point: (U, U), size: (U, U)) -> Matrix {
+    pub fn crop_from_middle (&self, point: (U, U), size: (U, U)) -> Matrix {
         let diff_x: U = (size.0 - 1) / 2;
         let diff_y: U = (size.1 - 1) / 2;
         
@@ -130,7 +166,7 @@ impl Matrix {
         }
     }
 
-    fn crop_form_corner (&self, point: (U,U), size: (U, U)) -> Matrix {
+    pub fn crop_form_corner (&self, point: (U,U), size: (U, U)) -> Matrix {
         let mut matrix: Vec<Vec<F>> = vec![];
         for y in point.1..point.1+size.1 {
             let mut row: Vec<F> = vec![];
@@ -146,7 +182,7 @@ impl Matrix {
         }
     }
 
-    fn sum_multiply_matrix (&self, other: &Matrix) -> F {
+    pub fn sum_multiply_matrix (&self, other: &Matrix) -> F {
         let mut value: F = 0 as F;
         for y in 0..self.y {
             for x in 0..self.x {
@@ -156,20 +192,19 @@ impl Matrix {
         value
     }
 
-}
+    pub fn equal( &self, other: &Matrix ) -> bool {
+        if self.x != other.x || self.y != other.y {
+            return false;
+        }
 
-fn main() {
-    println!("Hello, world!");
-    
-    // let mut m1 = Matrix::new(5, 5);
-    let mut m1 = Matrix::square_with_default(5, 3 as F);
-    m1.set(0,1, 5 as F);
-    
-    println!("Hello, world! ~ {}", m1.get(0,1));
-    let mut k1 = Matrix::square_with_default(3, 1 as F);
-
-    // m1.set(2, 1, 5.2f32);
-    
-    m1.convolute(&k1, SumMode::Cropped).print();
-    // m1.print();
+        for y in 0..self.y {
+            for x in 0..self.x {
+                if self.get(x, y) != other.get(x, y) {
+                    return false;
+                }
+            }
+        }
+        
+        true
+    }
 }
