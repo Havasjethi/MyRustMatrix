@@ -23,7 +23,7 @@ pub fn mast () {
 
 #[cfg(test)]
 mod matrix_tests {
-    use super::matrix::*;
+    use super::matrix::types::*;
 
     #[test]
     fn basic () {
